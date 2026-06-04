@@ -1,0 +1,25 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/minigamehub}
+    username: ${SPRING_DATASOURCE_USERNAME:minigamehub}
+    password: ${SPRING_DATASOURCE_PASSWORD:minigamehub}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:mini-game-hub-local-development-secret-please-change}
+    expiration-minutes: ${JWT_EXPIRATION_MINUTES:1440}
+  cors:
+    allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
