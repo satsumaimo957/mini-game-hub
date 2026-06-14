@@ -25,19 +25,19 @@ export function HomePage() {
   return (
     <section className="page-grid">
       <div className="intro-panel">
-        <p className="eyebrow">Local mini game platform</p>
+        <p className="eyebrow">ローカルで遊べるミニゲーム集</p>
         <h1>Mini Game Hub</h1>
         <p className="lead">
-          Play browser games, submit scores, track achievements, and tune game operations from the admin console.
+          ブラウザゲームを遊んで、スコアや実績を記録できます。管理画面からイベントやゲーム設定も調整できます。
         </p>
         <div className="action-row">
           <Link className="button primary" to="/game">
             <Play size={18} aria-hidden="true" />
-            Start Game
+            ゲームを始める
           </Link>
           <Link className="button ghost" to="/ranking">
             <Trophy size={18} aria-hidden="true" />
-            Ranking
+            ランキング
           </Link>
         </div>
       </div>
@@ -46,7 +46,7 @@ export function HomePage() {
         <section className="panel">
           <div className="section-heading">
             <CalendarClock size={20} aria-hidden="true" />
-            <h2>Current Event</h2>
+            <h2>開催中イベント</h2>
           </div>
           {event ? (
             <div className="event-summary">
@@ -54,39 +54,41 @@ export function HomePage() {
               <p>{event.description}</p>
               <dl className="metric-list">
                 <div>
-                  <dt>Multiplier</dt>
+                  <dt>倍率</dt>
                   <dd>{event.multiplier}x</dd>
                 </div>
                 <div>
-                  <dt>Until</dt>
+                  <dt>終了</dt>
                   <dd>{formatDate(event.endAt)}</dd>
                 </div>
               </dl>
             </div>
           ) : (
-            <p className="muted">No active event right now.</p>
+            <p className="muted">現在開催中のイベントはありません。</p>
           )}
         </section>
 
         <section className="panel">
           <div className="section-heading">
             <ArrowRight size={20} aria-hidden="true" />
-            <h2>Available Games</h2>
+            <h2>遊べるゲーム</h2>
           </div>
-          {games.length > 0 ? (
+          {games.filter((game) => game.gameType !== "UNITY_WEBGL" || Boolean(game.launchPath)).length > 0 ? (
             <div className="list">
-              {games.map((game) => (
+              {games
+                .filter((game) => game.gameType !== "UNITY_WEBGL" || Boolean(game.launchPath))
+                .map((game) => (
                 <div className="list-row" key={game.id}>
                   <div>
                     <strong>{game.name}</strong>
                     <p>{game.description}</p>
                   </div>
-                  <Link className="button compact" to="/game">Play</Link>
+                  <Link className="button compact" to={`/game?game=${game.slug}`}>遊ぶ</Link>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="muted">Backend data has not loaded yet.</p>
+            <p className="muted">ゲーム情報を読み込み中です。</p>
           )}
         </section>
         {error && <p className="error-text">{error}</p>}

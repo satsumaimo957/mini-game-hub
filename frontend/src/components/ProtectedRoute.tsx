@@ -6,7 +6,7 @@ export function ProtectedRoute({ adminOnly = false }: { adminOnly?: boolean }) {
   const { isAuthenticated, isAdmin, loading } = useAuth();
 
   if (loading) {
-    return <p className="muted">Checking session...</p>;
+    return <p className="muted">ログイン状態を確認しています...</p>;
   }
 
   if (!isAuthenticated) {

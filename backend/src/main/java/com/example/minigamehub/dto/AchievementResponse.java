@@ -9,6 +9,9 @@ public record AchievementResponse(
         String code,
         String name,
         String description,
+        Long gameId,
+        String gameSlug,
+        String gameName,
         String conditionType,
         int conditionValue,
         Instant achievedAt
@@ -19,6 +22,9 @@ public record AchievementResponse(
                 achievement.getCode(),
                 achievement.getName(),
                 achievement.getDescription(),
+                achievement.getGame() == null ? null : achievement.getGame().getId(),
+                achievement.getGame() == null ? null : achievement.getGame().getCode(),
+                achievement.getGame() == null ? null : achievement.getGame().getName(),
                 achievement.getConditionType().name(),
                 achievement.getConditionValue(),
                 achievedAt

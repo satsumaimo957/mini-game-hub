@@ -228,6 +228,10 @@ th {
   margin-top: 28px;
 }
 
+.compact-actions {
+  margin-top: 0;
+}
+
 .button {
   justify-content: center;
   gap: 8px;
@@ -436,6 +440,31 @@ textarea {
   min-width: 0;
 }
 
+.game-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 18px;
+}
+
+.game-tab {
+  min-height: 38px;
+  padding: 8px 12px;
+  color: #334155;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.game-tab.active,
+.game-tab:hover {
+  color: #06281e;
+  background: #d1fae5;
+  border-color: #34d399;
+}
+
 .game-stage {
   min-width: 0;
   overflow: hidden;
@@ -452,6 +481,31 @@ textarea {
 
 .game-canvas canvas {
   display: block;
+}
+
+.unity-frame {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  min-height: 360px;
+  border: 0;
+  background: #111827;
+}
+
+.unity-score-status {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.unity-score-status h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1rem;
 }
 
 .result-box {
@@ -577,5 +631,13 @@ textarea {
 
   .button {
     width: 100%;
+  }
+
+  .game-tab {
+    flex: 1 1 100%;
+  }
+
+  .unity-frame {
+    min-height: 300px;
   }
 }

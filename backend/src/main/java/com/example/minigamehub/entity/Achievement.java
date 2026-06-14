@@ -7,6 +7,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
@@ -28,6 +30,10 @@ public class Achievement {
 
     @Column(nullable = false, length = 500)
     private String description;
+
+    @ManyToOne
+    @JoinColumn(name = "game_id")
+    private Game game;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 40)
@@ -66,6 +72,14 @@ public class Achievement {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Game getGame() {
+        return game;
+    }
+
+    public void setGame(Game game) {
+        this.game = game;
     }
 
     public AchievementConditionType getConditionType() {

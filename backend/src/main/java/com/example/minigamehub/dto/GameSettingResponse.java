@@ -6,6 +6,7 @@ import java.time.Instant;
 public record GameSettingResponse(
         Long id,
         Long gameId,
+        String gameSlug,
         String gameName,
         int enemySpeed,
         int spawnRate,
@@ -17,6 +18,7 @@ public record GameSettingResponse(
         return new GameSettingResponse(
                 setting.getId(),
                 setting.getGame().getId(),
+                setting.getGame().getCode(),
                 setting.getGame().getName(),
                 setting.getEnemySpeed(),
                 setting.getSpawnRate(),

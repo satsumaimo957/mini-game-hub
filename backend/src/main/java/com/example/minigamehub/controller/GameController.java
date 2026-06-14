@@ -2,7 +2,7 @@ package com.example.minigamehub.controller;
 
 import com.example.minigamehub.dto.GameResponse;
 import com.example.minigamehub.dto.GameSettingResponse;
-import com.example.minigamehub.dto.ScoreResponse;
+import com.example.minigamehub.dto.RankingResponse;
 import com.example.minigamehub.service.GameService;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,8 +29,8 @@ public class GameController {
         return gameService.getSetting(gameId);
     }
 
-    @GetMapping("/{gameId}/ranking")
-    public List<ScoreResponse> getRanking(@PathVariable Long gameId) {
-        return gameService.getRanking(gameId);
+    @GetMapping("/{gameRef}/ranking")
+    public List<RankingResponse> getRanking(@PathVariable String gameRef) {
+        return gameService.getRanking(gameRef);
     }
 }

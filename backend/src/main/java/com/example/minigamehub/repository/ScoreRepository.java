@@ -16,11 +16,20 @@ public interface ScoreRepository extends JpaRepository<Score, Long> {
             """)
     List<Score> findRanking(@Param("gameId") Long gameId, Pageable pageable);
 
+    @Query("""
+            select s from Score s
+            where s.game.code = :gameSlug
+            order by s.score desc, s.createdAt asc
+            """)
+    List<Score> findRankingByGameSlug(@Param("gameSlug") String gameSlug, Pageable pageable);
+
     List<Score> findByUser_IdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 
     List<Score> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
     long countByUser_Id(Long userId);
+
+    long countByUser_IdAndGame_Id(Long userId, Long gameId);
 
     Optional<Score> findFirstByGame_IdOrderByScoreDescCreatedAtAsc(Long gameId);
 

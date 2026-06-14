@@ -11,22 +11,22 @@ export function Header() {
         <Gamepad2 size={24} aria-hidden="true" />
         <span>Mini Game Hub</span>
       </Link>
-      <nav className="nav-links" aria-label="Main navigation">
-        <NavLink to="/game">Game</NavLink>
+      <nav className="nav-links" aria-label="メインナビゲーション">
+        <NavLink to="/game">ゲーム</NavLink>
         <NavLink to="/ranking">
           <Trophy size={16} aria-hidden="true" />
-          Ranking
+          ランキング
         </NavLink>
         {isAuthenticated && (
           <NavLink to="/mypage">
             <UserCircle size={16} aria-hidden="true" />
-            My Page
+            マイページ
           </NavLink>
         )}
         {isAdmin && (
           <NavLink to="/admin">
             <Shield size={16} aria-hidden="true" />
-            Admin
+            管理
           </NavLink>
         )}
       </nav>
@@ -34,14 +34,14 @@ export function Header() {
         {isAuthenticated ? (
           <>
             <span className="user-chip">{user?.username}</span>
-            <button className="icon-button" type="button" onClick={logout} title="Log out" aria-label="Log out">
+            <button className="icon-button" type="button" onClick={logout} title="ログアウト" aria-label="ログアウト">
               <LogOut size={18} />
             </button>
           </>
         ) : (
           <>
-            <Link className="button ghost" to="/login">Log in</Link>
-            <Link className="button primary" to="/register">Sign up</Link>
+            <Link className="button ghost" to="/login">ログイン</Link>
+            <Link className="button primary" to="/register">新規登録</Link>
           </>
         )}
       </div>

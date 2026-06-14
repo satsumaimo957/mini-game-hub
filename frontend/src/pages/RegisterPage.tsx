@@ -19,7 +19,7 @@ export function RegisterPage() {
       await register(username, email, password);
       navigate("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed");
+      setError(err instanceof Error ? err.message : "登録に失敗しました。");
     } finally {
       setLoading(false);
     }
@@ -28,17 +28,17 @@ export function RegisterPage() {
   return (
     <section className="auth-page">
       <form className="form-panel" onSubmit={handleSubmit}>
-        <h1>Sign up</h1>
+        <h1>新規登録</h1>
         <label>
-          Username
+          ユーザー名
           <input value={username} onChange={(event) => setUsername(event.target.value)} required maxLength={50} />
         </label>
         <label>
-          Email
+          メールアドレス
           <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" required />
         </label>
         <label>
-          Password
+          パスワード
           <input
             value={password}
             onChange={(event) => setPassword(event.target.value)}
@@ -49,10 +49,10 @@ export function RegisterPage() {
         </label>
         {error && <p className="error-text">{error}</p>}
         <button className="button primary full" type="submit" disabled={loading}>
-          {loading ? "Creating..." : "Create account"}
+          {loading ? "作成中..." : "アカウントを作成"}
         </button>
         <p className="muted">
-          Already have one? <Link to="/login">Log in</Link>
+          すでにアカウントをお持ちの場合は <Link to="/login">ログイン</Link>
         </p>
       </form>
     </section>

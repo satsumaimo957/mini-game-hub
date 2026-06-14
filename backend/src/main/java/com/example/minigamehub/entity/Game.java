@@ -2,6 +2,8 @@ package com.example.minigamehub.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -28,6 +30,13 @@ public class Game {
 
     @Column(nullable = false, length = 500)
     private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 40)
+    private GameType gameType = GameType.PHASER;
+
+    @Column(length = 255)
+    private String launchPath;
 
     @Column(nullable = false)
     private boolean active;
@@ -70,6 +79,22 @@ public class Game {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public GameType getGameType() {
+        return gameType;
+    }
+
+    public void setGameType(GameType gameType) {
+        this.gameType = gameType;
+    }
+
+    public String getLaunchPath() {
+        return launchPath;
+    }
+
+    public void setLaunchPath(String launchPath) {
+        this.launchPath = launchPath;
     }
 
     public boolean isActive() {
