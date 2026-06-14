@@ -33,18 +33,20 @@ public class AchievementService {
     @Transactional
     public List<AchievementResponse> evaluate(User user, Score latestScore) {
         long playCount = scoreRepository.countByUser_Id(user.getId());
+        long gamePlayCount = scoreRepository.countByUser_IdAndGame_Id(user.getId(), latestScore.getGame().getId());
         boolean rankingFirst = scoreRepository
                 .findFirstByGame_IdOrderByScoreDescCreatedAtAsc(latestScore.getGame().getId())
                 .map(score -> score.getUser().getId().equals(user.getId()))
                 .orElse(false);
 
         List<AchievementResponse> awarded = new ArrayList<>();
-        for (Achievement achievement : achievementRepository.findAll()) {
+        for (Achievement achievement : achievementRepository.findByGame_IdOrGameIsNull(latestScore.getGame().getId())) {
             if (userAchievementRepository.existsByUser_IdAndAchievement_Id(user.getId(), achievement.getId())) {
                 continue;
             }
 
-            if (isAchieved(achievement, latestScore, playCount, rankingFirst)) {
+            long applicablePlayCount = achievement.getGame() == null ? playCount : gamePlayCount;
+            if (isAchieved(achievement, latestScore, applicablePlayCount, rankingFirst)) {
                 UserAchievement userAchievement = new UserAchievement();
                 userAchievement.setUser(user);
                 userAchievement.setAchievement(achievement);
@@ -67,6 +69,7 @@ public class AchievementService {
             case FIRST_PLAY -> playCount >= 1;
             case PLAY_COUNT -> playCount >= value;
             case SCORE_AT_LEAST -> latestScore.getScore() >= value;
+            case SURVIVE_SECONDS_AT_LEAST -> latestScore.getPlayTimeSeconds() >= value;
             case RANKING_FIRST -> rankingFirst;
         };
     }

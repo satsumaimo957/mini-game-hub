@@ -35,10 +35,10 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email is already registered");
+            throw new IllegalArgumentException("このメールアドレスはすでに登録されています。");
         }
         if (userRepository.existsByUsername(request.username())) {
-            throw new IllegalArgumentException("Username is already taken");
+            throw new IllegalArgumentException("このユーザー名はすでに使われています。");
         }
 
         User user = new User();
@@ -53,10 +53,10 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
+                .orElseThrow(() -> new BadCredentialsException("メールアドレスまたはパスワードが正しくありません。"));
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new BadCredentialsException("Invalid email or password");
+            throw new BadCredentialsException("メールアドレスまたはパスワードが正しくありません。");
         }
 
         return new AuthResponse(jwtService.generateToken(user), UserResponse.from(user));

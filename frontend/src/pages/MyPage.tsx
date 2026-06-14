@@ -20,7 +20,7 @@ export function MyPage() {
   }, [token]);
 
   if (!dashboard) {
-    return <p className="muted">Loading your page...</p>;
+    return <p className="muted">マイページを読み込んでいます...</p>;
   }
 
   return (
@@ -28,23 +28,23 @@ export function MyPage() {
       <div className="panel">
         <div className="section-heading">
           <UserCircle size={20} aria-hidden="true" />
-          <h1>My Page</h1>
+          <h1>マイページ</h1>
         </div>
         <dl className="metric-list">
           <div>
-            <dt>Username</dt>
+            <dt>ユーザー名</dt>
             <dd>{dashboard.user.username}</dd>
           </div>
           <div>
-            <dt>Email</dt>
+            <dt>メールアドレス</dt>
             <dd>{dashboard.user.email}</dd>
           </div>
           <div>
-            <dt>Role</dt>
+            <dt>権限</dt>
             <dd>{dashboard.user.role}</dd>
           </div>
           <div>
-            <dt>Best score</dt>
+            <dt>最高スコア</dt>
             <dd>{dashboard.bestScore}</dd>
           </div>
         </dl>
@@ -53,36 +53,37 @@ export function MyPage() {
       <div className="panel">
         <div className="section-heading">
           <Award size={20} aria-hidden="true" />
-          <h2>Achievements</h2>
+          <h2>実績</h2>
         </div>
         {dashboard.achievements.length > 0 ? (
           <ul className="achievement-list">
             {dashboard.achievements.map((achievement) => (
               <li key={achievement.id}>
                 <strong>{achievement.name}</strong>
+                <span className="muted">{achievement.gameName ?? "全ゲーム共通"}</span>
                 <span>{achievement.description}</span>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="muted">No achievements yet.</p>
+          <p className="muted">まだ実績はありません。</p>
         )}
       </div>
 
       <div className="panel wide-panel dashboard-history">
         <div className="section-heading">
           <History size={20} aria-hidden="true" />
-          <h2>Play History</h2>
+          <h2>プレイ履歴</h2>
         </div>
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Game</th>
-                <th>Score</th>
-                <th>Time</th>
-                <th>Event</th>
-                <th>Date</th>
+                <th>ゲーム</th>
+                <th>スコア</th>
+                <th>時間</th>
+                <th>イベント</th>
+                <th>日時</th>
               </tr>
             </thead>
             <tbody>

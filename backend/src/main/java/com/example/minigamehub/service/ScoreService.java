@@ -41,8 +41,7 @@ public class ScoreService {
     @Transactional
     public ScoreSubmitResponse submit(ScoreSubmitRequest request) {
         User user = currentUserService.getCurrentUser();
-        Game game = gameRepository.findById(request.gameId())
-                .orElseThrow(() -> new IllegalArgumentException("Game was not found"));
+        Game game = resolveGame(request);
         Event event = eventService.getCurrentEventEntity().orElse(null);
         BigDecimal multiplier = event == null ? BigDecimal.ONE : event.getMultiplier();
 
@@ -65,6 +64,18 @@ public class ScoreService {
                 ScoreResponse.from(score),
                 achievementService.evaluate(user, score)
         );
+    }
+
+    private Game resolveGame(ScoreSubmitRequest request) {
+        if (request.gameId() != null) {
+            return gameRepository.findById(request.gameId())
+                    .orElseThrow(() -> new IllegalArgumentException("ゲームが見つかりません。"));
+        }
+        if (request.gameSlug() != null && !request.gameSlug().isBlank()) {
+            return gameRepository.findByCode(request.gameSlug())
+                    .orElseThrow(() -> new IllegalArgumentException("ゲームが見つかりません。"));
+        }
+        throw new IllegalArgumentException("gameId または gameSlug を指定してください。");
     }
 
     public List<ScoreResponse> getMyScores() {

@@ -20,7 +20,7 @@ export function LoginPage() {
       const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? "/";
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof Error ? err.message : "ログインに失敗しました。");
     } finally {
       setLoading(false);
     }
@@ -29,21 +29,21 @@ export function LoginPage() {
   return (
     <section className="auth-page">
       <form className="form-panel" onSubmit={handleSubmit}>
-        <h1>Log in</h1>
+        <h1>ログイン</h1>
         <label>
-          Email
+          メールアドレス
           <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" required />
         </label>
         <label>
-          Password
+          パスワード
           <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" required />
         </label>
         {error && <p className="error-text">{error}</p>}
         <button className="button primary full" type="submit" disabled={loading}>
-          {loading ? "Logging in..." : "Log in"}
+          {loading ? "ログイン中..." : "ログイン"}
         </button>
         <p className="muted">
-          Need an account? <Link to="/register">Create one</Link>
+          アカウントをお持ちでない場合は <Link to="/register">新規登録</Link>
         </p>
       </form>
     </section>

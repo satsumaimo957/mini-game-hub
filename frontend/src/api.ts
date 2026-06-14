@@ -24,7 +24,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
 
   const data = await response.json().catch(() => null);
   if (!response.ok) {
-    throw new Error(data?.message ?? `Request failed with status ${response.status}`);
+    throw new Error(data?.message ?? `リクエストに失敗しました。ステータス: ${response.status}`);
   }
 
   return data as T;

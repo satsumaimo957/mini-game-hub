@@ -8,5 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface GameRepository extends JpaRepository<Game, Long> {
     Optional<Game> findByCode(String code);
 
+    boolean existsByCode(String code);
+
     List<Game> findByActiveTrueOrderByIdAsc();
 }

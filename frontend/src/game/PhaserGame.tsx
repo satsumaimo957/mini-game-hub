@@ -43,7 +43,7 @@ export function PhaserGame({ setting, resetKey, onGameOver }: PhaserGameProps) {
         this.player = this.add.rectangle(360, 350, 30, 30, 0x22c55e).setStrokeStyle(2, 0xbbf7d0);
         this.cursors = this.input.keyboard!.createCursorKeys();
         this.keys = this.input.keyboard!.addKeys("W,A,S,D") as Record<string, Phaser.Input.Keyboard.Key>;
-        this.scoreText = this.add.text(18, 16, "SCORE 0", {
+        this.scoreText = this.add.text(18, 16, "スコア 0", {
           color: "#e5e7eb",
           fontFamily: "Arial",
           fontSize: "18px"
@@ -70,7 +70,7 @@ export function PhaserGame({ setting, resetKey, onGameOver }: PhaserGameProps) {
         }
 
         this.updateObstacles(delta);
-        this.scoreText.setText(`SCORE ${this.currentScore()}`);
+        this.scoreText.setText(`スコア ${this.currentScore()}`);
         this.timeText.setText(`${Math.floor(this.elapsedSeconds)}s`);
 
         if (this.elapsedSeconds >= setting.timeLimitSeconds) {

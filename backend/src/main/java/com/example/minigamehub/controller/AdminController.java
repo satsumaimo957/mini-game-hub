@@ -1,7 +1,9 @@
 package com.example.minigamehub.controller;
 
+import com.example.minigamehub.dto.AchievementResponse;
 import com.example.minigamehub.dto.EventRequest;
 import com.example.minigamehub.dto.EventResponse;
+import com.example.minigamehub.dto.GameResponse;
 import com.example.minigamehub.dto.GameSettingResponse;
 import com.example.minigamehub.dto.GameSettingUpdateRequest;
 import com.example.minigamehub.dto.ScoreResponse;
@@ -30,6 +32,11 @@ public class AdminController {
         return adminService.getGameSettings();
     }
 
+    @GetMapping("/games")
+    public List<GameResponse> getGames() {
+        return adminService.getGames();
+    }
+
     @PutMapping("/game-settings/{id}")
     public GameSettingResponse updateGameSetting(
             @PathVariable Long id,
@@ -56,5 +63,10 @@ public class AdminController {
     @GetMapping("/scores")
     public List<ScoreResponse> getRecentScores() {
         return adminService.getRecentScores();
+    }
+
+    @GetMapping("/achievements")
+    public List<AchievementResponse> getAchievements() {
+        return adminService.getAchievements();
     }
 }

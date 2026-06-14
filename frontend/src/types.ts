@@ -16,14 +16,18 @@ export interface AuthResponse {
 export interface Game {
   id: number;
   code: string;
+  slug: string;
   name: string;
   description: string;
+  gameType: "PHASER" | "UNITY_WEBGL";
+  launchPath: string | null;
   active: boolean;
 }
 
 export interface GameSetting {
   id: number;
   gameId: number;
+  gameSlug: string;
   gameName: string;
   enemySpeed: number;
   spawnRate: number;
@@ -47,6 +51,7 @@ export interface Score {
   userId: number;
   username: string;
   gameId: number;
+  gameSlug: string;
   gameName: string;
   originalScore: number;
   score: number;
@@ -62,6 +67,9 @@ export interface Achievement {
   code: string;
   name: string;
   description: string;
+  gameId: number | null;
+  gameSlug: string | null;
+  gameName: string | null;
   conditionType: string;
   conditionValue: number;
   achievedAt: string | null;
@@ -83,4 +91,14 @@ export interface GameOverResult {
   score: number;
   playTimeSeconds: number;
   dodged: number;
+}
+
+export interface RankingEntry {
+  rank: number;
+  username: string;
+  score: number;
+  playTimeSeconds: number;
+  createdAt: string;
+  gameName: string;
+  gameSlug: string;
 }
