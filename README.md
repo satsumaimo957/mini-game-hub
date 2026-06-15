@@ -22,6 +22,7 @@ Mini Game Hub は、React + TypeScript のフロントエンドと Spring Boot +
 | 認証 | JWT, BCrypt |
 | DB | PostgreSQL |
 | ローカル DB | Docker Compose |
+| AWS | Amplify Hosting, Elastic Beanstalk, API Gateway, RDS for PostgreSQL |
 
 ## ディレクトリ構成
 
@@ -520,6 +521,164 @@ cd /Users/sanoshuto/mini-game-hub/frontend
 npm run build
 ```
 
+## AWS デプロイ準備
+
+AWS では次の構成を想定しています。
+
+| 領域 | AWS サービス | 役割 |
+| --- | --- | --- |
+| Frontend | AWS Amplify Hosting | React + Vite の静的ファイル配信 |
+| Backend | AWS Elastic Beanstalk | Spring Boot JAR の実行 |
+| HTTPS API | Amazon API Gateway | HTTPS の API 入口。Amplify からの API 通信を受け、Elastic Beanstalk へ転送 |
+| Database | Amazon RDS for PostgreSQL | 本番データベース |
+
+このリポジトリには、AWSへ直接デプロイする前の下準備として、本番用プロファイルと環境変数の受け口を用意しています。ローカル起動はこれまで通り使えます。
+
+本番では、ブラウザからは Amplify の HTTPS ページを開き、API 通信は API Gateway の HTTPS URL に送ります。API Gateway から Elastic Beanstalk の Spring Boot API へ転送し、Spring Boot は RDS for PostgreSQL に接続します。
+
+```text
+Browser
+  -> AWS Amplify Hosting
+  -> Amazon API Gateway
+  -> AWS Elastic Beanstalk
+  -> Amazon RDS for PostgreSQL
+```
+
+この構成にすることで、Amplify の HTTPS ページから HTTP の API を直接呼んで発生する Mixed Content を避けられます。
+
+### AWS 対応の工夫点
+
+- React / Vite の API 接続先は `VITE_API_BASE_URL` で切り替えます。
+- ローカルでは `http://localhost:8080/api`、AWS では API Gateway の HTTPS URL を使います。
+- Spring Boot は `prod` プロファイルで起動し、RDS の接続情報を環境変数から読みます。
+- API Gateway を HTTPS の入口にして、Amplify からの Mixed Content を回避します。
+- CORS 設定は `CORS_ALLOWED_ORIGIN` で切り替え、Amplify からのアクセスだけを許可します。
+- Unity WebGL は Amplify 配信に合わせて、圧縮なしの WebGL ビルドを配置する運用にします。
+
+### 秘密情報の扱い
+
+DB パスワード、JWT の秘密鍵、AWS の接続情報などは GitHub にコミットしないでください。
+
+実際の値は、Elastic Beanstalk の環境プロパティ、Amplify の環境変数、またはローカルの `.env` で管理します。
+
+このリポジトリに入れてよいのは、値の見本だけを書いた `.env.example` です。
+
+### Backend の環境変数
+
+Elastic Beanstalk では次の環境変数を設定します。
+
+| 変数 | 例 | 内容 |
+| --- | --- | --- |
+| `SPRING_PROFILES_ACTIVE` | `prod` | Spring Boot の本番プロファイル |
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://xxxxx.rds.amazonaws.com:5432/minigamehub` | RDS PostgreSQL の JDBC URL |
+| `SPRING_DATASOURCE_USERNAME` | `minigamehub` | DB ユーザー名 |
+| `SPRING_DATASOURCE_PASSWORD` | `********` | DB パスワード |
+| `JWT_SECRET` | `long-random-secret-value` | JWT 署名用の秘密鍵 |
+| `JWT_EXPIRATION_MINUTES` | `1440` | JWT の有効期限。省略可 |
+| `CORS_ALLOWED_ORIGIN` | `https://main.xxxxx.amplifyapp.com` | Amplify のフロントエンド URL |
+| `HIBERNATE_DDL_AUTO` | `update` | Hibernate の DDL 自動更新設定 |
+| `PORT` | `5000` | Elastic Beanstalk がアプリへ渡すポート。省略可 |
+
+`backend/src/main/resources/application.yml` はローカル向けのデフォルト値を持っています。
+
+`backend/src/main/resources/application-prod.yml` は AWS 本番向けです。本番では `SPRING_DATASOURCE_URL`、`SPRING_DATASOURCE_USERNAME`、`SPRING_DATASOURCE_PASSWORD`、`JWT_SECRET`、`CORS_ALLOWED_ORIGIN` を必ず環境変数で渡してください。
+
+### ddl-auto の注意
+
+現在、本番用プロファイルでも `HIBERNATE_DDL_AUTO` の標準値は `update` です。これは MVP や個人開発の初期デプロイでは便利ですが、本番運用では意図しないスキーマ変更のリスクがあります。
+
+公開後にデータを大切に扱う段階では、Flyway や Liquibase のようなマイグレーション管理に移行し、`HIBERNATE_DDL_AUTO=validate` などへ変更することを検討してください。
+
+### Elastic Beanstalk 用バックエンドビルド
+
+ローカルで JAR を作成します。
+
+```bash
+cd /Users/sanoshuto/mini-game-hub/backend
+mvn clean package
+```
+
+作成される JAR:
+
+```text
+backend/target/mini-game-hub-0.0.1-SNAPSHOT.jar
+```
+
+`backend/Procfile` では次のコマンドで起動するようにしています。
+
+```text
+web: java -jar target/mini-game-hub-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
+```
+
+Elastic Beanstalk へアップロードする場合は、`backend/` をデプロイ単位にし、`Procfile` と `target/mini-game-hub-0.0.1-SNAPSHOT.jar` が含まれるようにしてください。
+
+### Frontend の環境変数
+
+Amplify Hosting では次の環境変数を設定します。
+
+| 変数 | 例 | 内容 |
+| --- | --- | --- |
+| `VITE_API_BASE_URL` | `https://xxxxx.execute-api.ap-northeast-1.amazonaws.com/api` | API Gateway の HTTPS API URL |
+
+ローカルでは未設定でも `http://localhost:8080/api` を使います。
+
+以前の `VITE_API_URL` も後方互換として残していますが、今後は `VITE_API_BASE_URL` を使ってください。
+
+Amplify から Elastic Beanstalk の HTTP URL を直接呼ぶと、ブラウザで Mixed Content としてブロックされることがあります。そのため、本番では `VITE_API_BASE_URL` に API Gateway の HTTPS URL を設定します。
+
+### Amplify Hosting 用フロントエンドビルド
+
+ローカルで確認する場合:
+
+```bash
+cd /Users/sanoshuto/mini-game-hub/frontend
+npm install
+npm run build
+```
+
+Amplify のビルド設定では、アプリのルートを `frontend` にし、ビルドコマンドを `npm run build`、出力ディレクトリを `dist` にします。
+
+Amplify で `VITE_API_BASE_URL` を設定したあとにビルドすると、React アプリはその URL に API リクエストを送ります。
+
+Unity WebGL ファイルは `frontend/public/unity-games/` 配下に置かれているため、Vite のビルド時に静的ファイルとして `dist/unity-games/` にコピーされます。
+
+### Unity WebGL の Amplify 配信
+
+Unity WebGL は、Amplify の静的ファイル配信でそのまま読めるように、圧縮なしでビルドしたファイルを `frontend/public/unity-games/{gameSlug}/` に配置します。
+
+圧縮済みの `.gz` や `.br` を使う場合は、配信側で `Content-Encoding` を正しく返す設定が必要です。設定が合わないと Unity の loader がファイルを読めず、ゲームが起動しないことがあります。
+
+このプロジェクトでは、Amplify での扱いやすさを優先し、Unity WebGL は圧縮なしビルドを置く方針です。
+
+確認するファイル例:
+
+```text
+frontend/public/unity-games/no-strike/index.html
+frontend/public/unity-games/no-strike/Build/
+
+frontend/public/unity-games/shikoku-rush/index.html
+frontend/public/unity-games/shikoku-rush/Build/
+```
+
+AWS 反映後は、Amplify の URL から `/unity-games/no-strike/index.html` や `/unity-games/shikoku-rush/index.html` が表示できることを確認します。
+
+### AWS 本番確認チェック
+
+1. Amplify の環境変数 `VITE_API_BASE_URL` が API Gateway の HTTPS URL になっていることを確認します。
+2. Elastic Beanstalk の環境変数 `SPRING_PROFILES_ACTIVE=prod` を確認します。
+3. Elastic Beanstalk の `SPRING_DATASOURCE_URL` が RDS PostgreSQL を向いていることを確認します。
+4. Elastic Beanstalk の `CORS_ALLOWED_ORIGIN` が Amplify の URL と一致していることを確認します。
+5. Amplify の画面からログインできることを確認します。
+6. No Strike / Shikoku Rush を起動し、Unity WebGL が iframe 内で表示されることを確認します。
+7. ゲーム終了時にスコアが登録され、ランキングとマイページに反映されることを確認します。
+8. ブラウザの Console に Mixed Content や CORS エラーが出ていないことを確認します。
+
+### AWS 利用時の課金注意
+
+AWS の RDS、Elastic Beanstalk、Amplify は無料枠を超えると料金が発生します。
+
+特に RDS は起動している時間、ストレージ、バックアップ、データ転送で課金される可能性があります。検証が終わった環境は停止または削除してください。
+
 ## よくあるトラブル
 
 ### React 画面が API に接続できない
@@ -527,6 +686,20 @@ npm run build
 Spring Boot が `http://localhost:8080` で起動しているか確認してください。
 
 また、`backend/src/main/resources/application.yml` の CORS 設定は標準で `http://localhost:5173` を許可しています。Vite のポートを変えた場合は、`CORS_ALLOWED_ORIGIN` も合わせて変更してください。
+
+AWS 本番では、Amplify 側の `VITE_API_BASE_URL` が API Gateway の HTTPS URL になっているか、Elastic Beanstalk 側の `CORS_ALLOWED_ORIGIN` が Amplify の URL になっているかを確認してください。
+
+### AWS 本番で Mixed Content エラーが出る
+
+Amplify の画面は HTTPS で配信されるため、HTTP の Elastic Beanstalk URL を直接呼ぶとブラウザにブロックされます。
+
+`VITE_API_BASE_URL` には Elastic Beanstalk の HTTP URL ではなく、API Gateway の HTTPS URL を設定してください。
+
+### AWS 本番で CORS エラーが出る
+
+Elastic Beanstalk の `CORS_ALLOWED_ORIGIN` を、実際にブラウザで開いている Amplify の URL と完全一致させてください。
+
+末尾スラッシュの有無や、`https://` の付け忘れでも一致しないことがあります。
 
 ### Unity ゲームを直接開くとスコア登録されない
 
@@ -573,6 +746,11 @@ docker compose up -d
 - ミニゲーム単体ではなく、スコア、ランキング、実績、イベント、管理画面を持つゲームプラットフォームとして設計している
 - React / Phaser / Unity WebGL を同じゲーム一覧から扱えるようにしている
 - Unity WebGL とは iframe と `postMessage` で疎結合に連携している
+- AWS では Amplify Hosting、API Gateway、Elastic Beanstalk、RDS for PostgreSQL の構成で公開できる
+- API Gateway を HTTPS 入口にして Mixed Content を回避している
+- フロントエンドの API 接続先を `VITE_API_BASE_URL` で切り替えられる
+- Spring Boot の `prod` プロファイルで RDS 接続、JWT 秘密鍵、CORS 許可オリジンを環境変数化している
+- Unity WebGL は Amplify の静的配信に合わせ、圧縮なしビルドを配置する方針にしている
 - Spring Boot 側では `Controller -> Service -> Repository -> Entity` の責務を分けている
 - JWT と Role により USER / ADMIN の権限を分離している
 - スコア登録時にイベント倍率と実績判定をサービス層で処理している
