@@ -520,6 +520,109 @@ cd /Users/sanoshuto/mini-game-hub/frontend
 npm run build
 ```
 
+## AWS デプロイ準備
+
+AWS では次の構成を想定しています。
+
+| 領域 | AWS サービス | 役割 |
+| --- | --- | --- |
+| Frontend | AWS Amplify Hosting | React + Vite の静的ファイル配信 |
+| Backend | AWS Elastic Beanstalk | Spring Boot JAR の実行 |
+| Database | Amazon RDS for PostgreSQL | 本番データベース |
+
+このリポジトリには、AWSへ直接デプロイする前の下準備として、本番用プロファイルと環境変数の受け口を用意しています。ローカル起動はこれまで通り使えます。
+
+### 秘密情報の扱い
+
+DB パスワード、JWT の秘密鍵、AWS の接続情報などは GitHub にコミットしないでください。
+
+実際の値は、Elastic Beanstalk の環境プロパティ、Amplify の環境変数、またはローカルの `.env` で管理します。
+
+このリポジトリに入れてよいのは、値の見本だけを書いた `.env.example` です。
+
+### Backend の環境変数
+
+Elastic Beanstalk では次の環境変数を設定します。
+
+| 変数 | 例 | 内容 |
+| --- | --- | --- |
+| `SPRING_PROFILES_ACTIVE` | `prod` | Spring Boot の本番プロファイル |
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://xxxxx.rds.amazonaws.com:5432/minigamehub` | RDS PostgreSQL の JDBC URL |
+| `SPRING_DATASOURCE_USERNAME` | `minigamehub` | DB ユーザー名 |
+| `SPRING_DATASOURCE_PASSWORD` | `********` | DB パスワード |
+| `JWT_SECRET` | `long-random-secret-value` | JWT 署名用の秘密鍵 |
+| `JWT_EXPIRATION_MINUTES` | `1440` | JWT の有効期限。省略可 |
+| `CORS_ALLOWED_ORIGIN` | `https://main.xxxxx.amplifyapp.com` | Amplify のフロントエンド URL |
+| `HIBERNATE_DDL_AUTO` | `update` | Hibernate の DDL 自動更新設定 |
+| `PORT` | `5000` | Elastic Beanstalk がアプリへ渡すポート。省略可 |
+
+`backend/src/main/resources/application.yml` はローカル向けのデフォルト値を持っています。
+
+`backend/src/main/resources/application-prod.yml` は AWS 本番向けです。本番では `SPRING_DATASOURCE_URL`、`SPRING_DATASOURCE_USERNAME`、`SPRING_DATASOURCE_PASSWORD`、`JWT_SECRET`、`CORS_ALLOWED_ORIGIN` を必ず環境変数で渡してください。
+
+### ddl-auto の注意
+
+現在、本番用プロファイルでも `HIBERNATE_DDL_AUTO` の標準値は `update` です。これは MVP や個人開発の初期デプロイでは便利ですが、本番運用では意図しないスキーマ変更のリスクがあります。
+
+公開後にデータを大切に扱う段階では、Flyway や Liquibase のようなマイグレーション管理に移行し、`HIBERNATE_DDL_AUTO=validate` などへ変更することを検討してください。
+
+### Elastic Beanstalk 用バックエンドビルド
+
+ローカルで JAR を作成します。
+
+```bash
+cd /Users/sanoshuto/mini-game-hub/backend
+mvn clean package
+```
+
+作成される JAR:
+
+```text
+backend/target/mini-game-hub-0.0.1-SNAPSHOT.jar
+```
+
+`backend/Procfile` では次のコマンドで起動するようにしています。
+
+```text
+web: java -jar target/mini-game-hub-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
+```
+
+Elastic Beanstalk へアップロードする場合は、`backend/` をデプロイ単位にし、`Procfile` と `target/mini-game-hub-0.0.1-SNAPSHOT.jar` が含まれるようにしてください。
+
+### Frontend の環境変数
+
+Amplify Hosting では次の環境変数を設定します。
+
+| 変数 | 例 | 内容 |
+| --- | --- | --- |
+| `VITE_API_BASE_URL` | `https://xxxxx.elasticbeanstalk.com/api` | Elastic Beanstalk の API URL |
+
+ローカルでは未設定でも `http://localhost:8080/api` を使います。
+
+以前の `VITE_API_URL` も後方互換として残していますが、今後は `VITE_API_BASE_URL` を使ってください。
+
+### Amplify Hosting 用フロントエンドビルド
+
+ローカルで確認する場合:
+
+```bash
+cd /Users/sanoshuto/mini-game-hub/frontend
+npm install
+npm run build
+```
+
+Amplify のビルド設定では、アプリのルートを `frontend` にし、ビルドコマンドを `npm run build`、出力ディレクトリを `dist` にします。
+
+Amplify で `VITE_API_BASE_URL` を設定したあとにビルドすると、React アプリはその URL に API リクエストを送ります。
+
+Unity WebGL ファイルは `frontend/public/unity-games/` 配下に置かれているため、Vite のビルド時に静的ファイルとして `dist/unity-games/` にコピーされます。
+
+### AWS 利用時の課金注意
+
+AWS の RDS、Elastic Beanstalk、Amplify は無料枠を超えると料金が発生します。
+
+特に RDS は起動している時間、ストレージ、バックアップ、データ転送で課金される可能性があります。検証が終わった環境は停止または削除してください。
+
 ## よくあるトラブル
 
 ### React 画面が API に接続できない

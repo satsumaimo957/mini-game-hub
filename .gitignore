@@ -9,4 +9,8 @@ frontend/dist/
 frontend/.vite/
 
 .env
+.env.*
+!.env.example
+!backend/.env.example
+!frontend/.env.example
 *.log
