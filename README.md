@@ -4,6 +4,12 @@ Mini Game Hub は、React + TypeScript のフロントエンドと Spring Boot +
 
 ゲームを遊ぶだけでなく、ログイン、JWT 認証、スコア保存、ゲーム別ランキング、マイページ、実績、期間限定イベント、管理画面までをまとめて扱います。
 
+## 公開URL
+
+AWS Amplify Hosting で公開しています。
+
+https://feature-aws-deployment.d2nenkg5oxx6z6.amplifyapp.com/
+
 現在は次のゲームに対応しています。
 
 | ゲーム | 種類 | slug | 起動方法 |
