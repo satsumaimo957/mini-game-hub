@@ -55,9 +55,9 @@
       var loaderUrl = buildUrl + "/no-strike.loader.js";
       var config = {
         arguments: [],
-        dataUrl: buildUrl + "/no-strike.data.br",
-        frameworkUrl: buildUrl + "/no-strike.framework.js.br",
-        codeUrl: buildUrl + "/no-strike.wasm.br",
+        dataUrl: buildUrl + "/no-strike.data",
+        frameworkUrl: buildUrl + "/no-strike.framework.js",
+        codeUrl: buildUrl + "/no-strike.wasm",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
         productName: "Bowling Pin",
@@ -104,8 +104,8 @@
 
       } else {
         // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
-        canvas.style.width = "min(100vw, calc(100vh * 1.6))";
-        canvas.style.height = "min(100vh, calc(100vw / 1.6))";
+        canvas.style.width = "960px";
+        canvas.style.height = "600px";
       }
 
       document.querySelector("#unity-loading-bar").style.display = "block";
