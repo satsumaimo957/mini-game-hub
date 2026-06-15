@@ -211,6 +211,7 @@ export function AdminPage() {
                 <th>Slug</th>
                 <th>種類</th>
                 <th>起動パス</th>
+                <th>説明</th>
                 <th>ランキング</th>
               </tr>
             </thead>
@@ -221,6 +222,7 @@ export function AdminPage() {
                   <td>{game.slug}</td>
                   <td>{game.gameType}</td>
                   <td>{game.launchPath ?? "-"}</td>
+                  <td>{game.description}</td>
                   <td><a href={`/ranking?game=${game.slug}`}>開く</a></td>
                 </tr>
               ))}

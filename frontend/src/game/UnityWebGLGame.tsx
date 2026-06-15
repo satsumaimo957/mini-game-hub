@@ -53,7 +53,7 @@ export function UnityWebGLGame({ gameSlug, launchPath, resetKey, onGameFinished 
     <iframe
       key={`${gameSlug}-${resetKey}`}
       className="unity-frame"
-      title="No Strike"
+      title={gameSlug}
       src={launchPath}
       allow="fullscreen; gamepad; autoplay"
     />

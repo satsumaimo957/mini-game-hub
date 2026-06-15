@@ -30,8 +30,11 @@ export function PhaserGame({ setting, resetKey, onGameOver }: PhaserGameProps) {
       private spawnTimer = 0;
       private dodged = 0;
       private finished = false;
+      private state: "ready" | "playing" | "ended" = "ready";
       private scoreText!: Phaser.GameObjects.Text;
       private timeText!: Phaser.GameObjects.Text;
+      private startOverlay!: Phaser.GameObjects.Container;
+      private resultOverlay!: Phaser.GameObjects.Container;
 
       constructor() {
         super("dodge-runner");
@@ -53,10 +56,18 @@ export function PhaserGame({ setting, resetKey, onGameOver }: PhaserGameProps) {
           fontFamily: "Arial",
           fontSize: "18px"
         });
+        this.showStartScreen();
+        this.input.on("pointerdown", () => {
+          if (this.state === "ready") {
+            this.startGame();
+          }
+        });
+        this.input.keyboard!.on("keydown-SPACE", () => this.startGame());
+        this.input.keyboard!.on("keydown-ENTER", () => this.startGame());
       }
 
       update(_time: number, delta: number) {
-        if (this.finished) {
+        if (this.finished || this.state !== "playing") {
           return;
         }
 
@@ -135,17 +146,88 @@ export function PhaserGame({ setting, resetKey, onGameOver }: PhaserGameProps) {
         return Math.floor(this.elapsedSeconds * setting.baseScorePerSecond + this.dodged * 25);
       }
 
+      private showStartScreen() {
+        this.startOverlay = this.add.container(360, 210);
+        const shade = this.add.rectangle(0, 0, 720, 420, 0x020617, 0.78);
+        const title = this.add.text(0, -72, "ドッジランナー", {
+          align: "center",
+          color: "#f8fafc",
+          fontFamily: "Arial",
+          fontSize: "32px",
+          fontStyle: "bold"
+        }).setOrigin(0.5);
+        const body = this.add.text(0, -16, "落ちてくるブロックを避け続けよう。\n矢印キーまたは WASD で移動できます。", {
+          align: "center",
+          color: "#dbeafe",
+          fontFamily: "Arial",
+          fontSize: "18px",
+          lineSpacing: 8
+        }).setOrigin(0.5);
+        const action = this.add.text(0, 82, "クリック / Space / Enter で開始", {
+          align: "center",
+          color: "#86efac",
+          fontFamily: "Arial",
+          fontSize: "20px",
+          fontStyle: "bold"
+        }).setOrigin(0.5);
+        this.startOverlay.add([shade, title, body, action]);
+      }
+
+      private startGame() {
+        if (this.state !== "ready") {
+          return;
+        }
+        this.state = "playing";
+        this.startOverlay.destroy();
+      }
+
       private endGame() {
         if (this.finished) {
           return;
         }
         this.finished = true;
+        this.state = "ended";
+        const finalScore = this.currentScore();
+        const finalTime = Math.floor(this.elapsedSeconds);
         onGameOver({
-          score: this.currentScore(),
-          playTimeSeconds: Math.floor(this.elapsedSeconds),
+          score: finalScore,
+          playTimeSeconds: finalTime,
           dodged: this.dodged
         });
+        this.showResultScreen(finalScore, finalTime);
         this.scene.pause();
+      }
+
+      private showResultScreen(finalScore: number, finalTime: number) {
+        this.resultOverlay = this.add.container(360, 210);
+        const shade = this.add.rectangle(0, 0, 720, 420, 0x020617, 0.82);
+        const title = this.add.text(0, -92, "リザルト", {
+          align: "center",
+          color: "#f8fafc",
+          fontFamily: "Arial",
+          fontSize: "32px",
+          fontStyle: "bold"
+        }).setOrigin(0.5);
+        const score = this.add.text(0, -30, `スコア ${finalScore}`, {
+          align: "center",
+          color: "#86efac",
+          fontFamily: "Arial",
+          fontSize: "28px",
+          fontStyle: "bold"
+        }).setOrigin(0.5);
+        const detail = this.add.text(0, 24, `プレイ時間 ${finalTime}s / 回避 ${this.dodged}`, {
+          align: "center",
+          color: "#dbeafe",
+          fontFamily: "Arial",
+          fontSize: "18px"
+        }).setOrigin(0.5);
+        const action = this.add.text(0, 88, "右側のボタンからスコア登録や再プレイができます", {
+          align: "center",
+          color: "#cbd5e1",
+          fontFamily: "Arial",
+          fontSize: "16px"
+        }).setOrigin(0.5);
+        this.resultOverlay.add([shade, title, score, detail, action]);
       }
     }
 

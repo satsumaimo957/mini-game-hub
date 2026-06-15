@@ -1,62 +1,95 @@
 # Mini Game Hub
 
-Mini Game Hub は、React + TypeScript + Phaser のミニゲーム画面と、Spring Boot + PostgreSQL の運営データ管理 API を組み合わせたローカル実行用ゲームプラットフォームです。
+Mini Game Hub は、React + TypeScript のフロントエンドと Spring Boot + PostgreSQL のバックエンドで作った、ローカル実行用のミニゲームプラットフォームです。
 
-ゲーム本体はシンプルな避けゲームですが、スコア登録、ランキング、プレイ履歴、実績、期間限定イベント、ゲーム設定の管理を DB と REST API で扱うことを重視しています。
+ゲームを遊ぶだけでなく、ログイン、JWT 認証、スコア保存、ゲーム別ランキング、マイページ、実績、期間限定イベント、管理画面までをまとめて扱います。
+
+現在は次のゲームに対応しています。
+
+| ゲーム | 種類 | slug | 起動方法 |
+| --- | --- | --- | --- |
+| ドッジランナー | Phaser | `dodge-runner` | React 内で Phaser を起動 |
+| No Strike | Unity WebGL | `no-strike` | iframe で Unity WebGL を表示 |
+| Shikoku Rush | Unity WebGL | `shikoku-rush` | iframe で Unity WebGL を表示 |
 
 ## 技術スタック
 
-- Frontend: React, TypeScript, Vite, Phaser, React Router, Unity WebGL iframe integration
-- Backend: Java 21, Spring Boot 3, Spring Web, Spring Data JPA, Spring Security, JWT, Validation
-- DB: PostgreSQL
-- Local DB: Docker Compose
+| 領域 | 使用技術 |
+| --- | --- |
+| Frontend | React, TypeScript, Vite, React Router, Phaser |
+| Unity 連携 | Unity WebGL, iframe, `window.postMessage` |
+| Backend | Java 21, Spring Boot 3, Spring Web, Spring Data JPA, Spring Security |
+| 認証 | JWT, BCrypt |
+| DB | PostgreSQL |
+| ローカル DB | Docker Compose |
 
 ## ディレクトリ構成
 
 ```text
 mini-game-hub/
-  backend/              # Spring Boot API
-  frontend/             # React + Vite + Phaser
-  docker-compose.yml    # PostgreSQL
+  backend/                         # Spring Boot API
+  frontend/                        # React + Vite + Phaser
+    public/
+      unity-games/
+        no-strike/                 # No Strike の Unity WebGL ビルド
+        shikoku-rush/              # Shikoku Rush の Unity WebGL ビルド
+  docker-compose.yml               # PostgreSQL
   README.md
 ```
 
 ## 起動手順
 
-前提:
+必要なもの:
 
 - Java 21
-- Maven 3.9+
-- Node.js 20+
+- Maven 3.9 以上
+- Node.js 20 以上
 - Docker / Docker Compose
 
-### 1. PostgreSQL を起動
+### 1. PostgreSQL を起動する
+
+プロジェクト直下で実行します。
 
 ```bash
-cd mini-game-hub
+cd /Users/sanoshuto/mini-game-hub
 docker compose up -d
 ```
 
 DB 接続情報:
 
-- database: `minigamehub`
-- user: `minigamehub`
-- password: `minigamehub`
-- port: `5432`
+| 項目 | 値 |
+| --- | --- |
+| database | `minigamehub` |
+| user | `minigamehub` |
+| password | `minigamehub` |
+| port | `5432` |
 
-### 2. バックエンドを起動
+停止するとき:
 
 ```bash
-cd mini-game-hub/backend
+cd /Users/sanoshuto/mini-game-hub
+docker compose down
+```
+
+### 2. Spring Boot を起動する
+
+別のターミナルを開いて実行します。
+
+```bash
+cd /Users/sanoshuto/mini-game-hub/backend
 mvn spring-boot:run
 ```
 
-API は `http://localhost:8080/api` で起動します。初回起動時に JPA の `ddl-auto: update` でテーブルを作成し、`DataInitializer` が初期データを投入します。
+バックエンドは `http://localhost:8080/api` で起動します。
 
-### 3. フロントエンドを起動
+初回起動時は `spring.jpa.hibernate.ddl-auto=update` によりテーブルが作られ、`DataInitializer` が初期データを投入します。
+
+### 3. React を起動する
+
+さらに別のターミナルを開いて実行します。
 
 ```bash
-cd mini-game-hub/frontend
+cd /Users/sanoshuto/mini-game-hub/frontend
 npm install
 npm run dev
 ```
@@ -65,105 +98,190 @@ npm run dev
 
 ## 初期ユーザー
 
-| role | email | password |
-| --- | --- | --- |
-| ADMIN | `admin@example.com` | `password` |
-| USER | `user@example.com` | `password` |
+| 権限 | email | password | 用途 |
+| --- | --- | --- | --- |
+| ADMIN | `admin@example.com` | `password` | 管理画面の確認 |
+| USER | `user@example.com` | `password` | 通常プレイの確認 |
+
+## 画面一覧
+
+| URL | 内容 |
+| --- | --- |
+| `/` | トップページ |
+| `/register` | ユーザー登録 |
+| `/login` | ログイン |
+| `/game` | ゲーム画面。標準ではドッジランナー |
+| `/game?game=dodge-runner` | ドッジランナー |
+| `/game?game=no-strike` | No Strike |
+| `/game?game=shikoku-rush` | Shikoku Rush |
+| `/ranking` | ランキング |
+| `/ranking?game=no-strike` | No Strike のゲーム別ランキング |
+| `/ranking?game=shikoku-rush` | Shikoku Rush のゲーム別ランキング |
+| `/mypage` | ユーザー情報、プレイ履歴、実績 |
+| `/admin` | ADMIN 専用の管理画面 |
 
 ## 初期データ
 
-- Game: `Dodge Runner` (`PHASER`)
-- Game: `No Strike` (`UNITY_WEBGL`, `/unity-games/no-strike/index.html`)
-- Game setting: enemy speed, spawn rate, time limit, base score
-- Achievements: first play, 10 plays, score 1000, score 5000, ranking first
-- Event: `Starter Boost 1.5x`
+### ゲーム
 
-## スコア保存設計
+| name | slug | gameType | launchPath |
+| --- | --- | --- | --- |
+| ドッジランナー | `dodge-runner` | `PHASER` | なし |
+| No Strike | `no-strike` | `UNITY_WEBGL` | `/unity-games/no-strike/index.html` |
+| Shikoku Rush | `shikoku-rush` | `UNITY_WEBGL` | `/unity-games/shikoku-rush/index.html` |
 
-`scores.score` にはランキングに使う最終スコアを保存します。イベントが開催中の場合、フロントから送られた元スコアに `events.multiplier` を掛けて保存します。
+`gameType` が `PHASER` のゲームは React 内で Phaser コンポーネントを表示します。
 
-同時に `scores.originalScore` と `scores.eventMultiplier`、適用された `event_id` も保存するため、あとから「元スコア」「倍率」「最終スコア」を確認できます。
+`gameType` が `UNITY_WEBGL` のゲームは `launchPath` を iframe で表示します。Unity WebGL の実ファイルが存在しないゲームは `launchPath` を設定しない運用にしてください。画面側でも、起動できない Unity ゲームへのリンクは出さない前提です。
+
+### イベント
+
+初期状態では `スタートダッシュ 1.5x` というサンプルイベントが有効です。
+
+イベント期間中にスコア登録すると、送信された元スコアにイベント倍率がかかり、ランキング用の最終スコアとして保存されます。
+
+## ゲーム説明
+
+### No Strike
+
+最後の 1 ピンになってボールを避け続けろ！
+
+左右移動だけのシンプル操作で、迫り来るボールを回避するアクションゲームです。時間経過でボールは速くなり、カーブし、数も増加します。
+
+どこまで耐えられるか挑戦しよう！
+
+操作:
+
+- `←` / `→` キー: ピンを左右に移動
+- マウスクリック: ボタンを押す
+
+### Shikoku Rush
+
+四国がオーストラリアになりすまそうとしている…？
+
+`Shikoku Rush` は、表示される図形の中から四国を見つけ出し、選び続けるカジュアルゲームです。制限時間内にどれだけ正解できるかに挑戦します。
+
+似た形や回転した図形に惑わされず、正しく見極められるかがカギです。観察力が試されます。
+
+操作:
+
+- マウスクリック: 四国だと思う図形を選択
+
+## スコア保存の考え方
+
+スコア登録 API は、`gameId` または `gameSlug` でゲームを特定できます。
+
+Unity WebGL ゲームからは `gameSlug` を使って登録します。
+
+```json
+{
+  "gameSlug": "shikoku-rush",
+  "score": 2500,
+  "playTimeSeconds": 64
+}
+```
+
+保存時には次の値を保持します。
+
+| カラム | 内容 |
+| --- | --- |
+| `scores.original_score` | フロントエンドまたは Unity から送られた元スコア |
+| `scores.event_multiplier` | 適用されたイベント倍率 |
+| `scores.score` | ランキングに使う最終スコア |
+| `scores.play_time_seconds` | プレイ時間 |
+| `scores.game_id` | 対象ゲーム |
+| `scores.user_id` | ログイン中ユーザー |
+| `scores.event_id` | 適用されたイベント。なければ `null` |
+
+スコア登録後、条件を満たした新しい実績があれば、レスポンスに含まれます。
 
 ## 主要 API
 
 ### Auth
 
-| method | path | auth | description |
+| method | path | auth | 内容 |
 | --- | --- | --- | --- |
 | POST | `/api/auth/register` | public | ユーザー登録 |
 | POST | `/api/auth/login` | public | ログインして JWT を取得 |
-| GET | `/api/auth/me` | USER/ADMIN | ログイン中ユーザー情報 |
+| GET | `/api/auth/me` | USER / ADMIN | ログイン中ユーザー情報 |
 
 ### Games / Scores
 
-| method | path | auth | description |
+| method | path | auth | 内容 |
 | --- | --- | --- | --- |
 | GET | `/api/games` | public | ゲーム一覧 |
 | GET | `/api/games/{gameId}/settings` | public | ゲーム設定取得 |
-| GET | `/api/games/{gameId}/ranking` | public | 上位 10 件ランキング。既存互換用 |
-| GET | `/api/games/{gameSlug}/ranking` | public | ゲーム slug 指定の上位 10 件ランキング |
-| POST | `/api/scores` | USER/ADMIN | スコア登録、イベント倍率適用、実績判定。`gameId` または `gameSlug` を指定 |
-| GET | `/api/scores/me` | USER/ADMIN | 自分のスコア履歴 |
+| GET | `/api/games/{gameId}/ranking` | public | ゲーム ID 指定のランキング。既存互換用 |
+| GET | `/api/games/{gameSlug}/ranking` | public | game slug 指定のゲーム別ランキング |
+| POST | `/api/scores` | USER / ADMIN | スコア登録、イベント倍率適用、実績判定 |
+| GET | `/api/scores/me` | USER / ADMIN | 自分のスコア履歴 |
+
+ランキング API のレスポンス例:
+
+```json
+[
+  {
+    "rank": 1,
+    "username": "player",
+    "score": 2500,
+    "playTimeSeconds": 64,
+    "createdAt": "2026-06-15T00:00:00Z",
+    "gameName": "Shikoku Rush",
+    "gameSlug": "shikoku-rush"
+  }
+]
+```
+
+ランキングはスコア降順です。同点の場合は作成日時が古いスコアを上位にします。返す件数は上位 10 件です。
 
 ### User
 
-| method | path | auth | description |
+| method | path | auth | 内容 |
 | --- | --- | --- | --- |
-| GET | `/api/users/me/dashboard` | USER/ADMIN | マイページ用データ |
+| GET | `/api/users/me/dashboard` | USER / ADMIN | マイページ用データ |
 
 ### Events
 
-| method | path | auth | description |
+| method | path | auth | 内容 |
 | --- | --- | --- | --- |
 | GET | `/api/events/current` | public | 現在開催中イベント |
 
 ### Admin
 
-| method | path | auth | description |
+| method | path | auth | 内容 |
 | --- | --- | --- | --- |
-| GET | `/api/admin/game-settings` | ADMIN | ゲーム設定一覧 |
 | GET | `/api/admin/games` | ADMIN | ゲーム一覧、slug、gameType、launchPath 確認 |
-| GET | `/api/admin/achievements` | ADMIN | 実績一覧、対象ゲーム確認 |
+| GET | `/api/admin/game-settings` | ADMIN | ゲーム設定一覧 |
 | PUT | `/api/admin/game-settings/{id}` | ADMIN | ゲーム設定更新 |
+| GET | `/api/admin/achievements` | ADMIN | 実績一覧、対象ゲーム確認 |
 | GET | `/api/admin/events` | ADMIN | イベント一覧 |
 | POST | `/api/admin/events` | ADMIN | イベント作成 |
 | PUT | `/api/admin/events/{id}` | ADMIN | イベント更新、有効/無効切り替え |
 | GET | `/api/admin/scores` | ADMIN | 最近のスコア一覧 |
 
-## フロントエンド画面
+## Unity WebGL 連携
 
-- `/` トップページ: 開催中イベント、ゲーム開始、ランキング導線
-- `/register` ユーザー登録
-- `/login` ログイン
-- `/game` Phaser の避けゲーム、ゲーム終了後のスコア送信
-- `/game?game=no-strike` Unity WebGL の No Strike
-- `/ranking?game=no-strike` ゲーム別上位 10 件ランキング
-- `/mypage` ユーザー情報、最高スコア、プレイ履歴、実績
-- `/admin` ADMIN 専用のゲーム設定、イベント、スコア管理
+Unity WebGL ビルドは `frontend/public/unity-games/{gameSlug}/` に配置します。
 
-## Unity WebGL ゲーム連携
-
-Unity WebGL ビルドは `frontend/public/unity-games/{gameSlug}/` に配置します。No Strike は以下に配置済みです。
+現在の配置:
 
 ```text
-frontend/public/unity-games/no-strike/index.html
-frontend/public/unity-games/no-strike/Build/
-frontend/public/unity-games/no-strike/TemplateData/
+frontend/public/unity-games/no-strike/
+  index.html
+  Build/
+  TemplateData/
+
+frontend/public/unity-games/shikoku-rush/
+  index.html
+  Build/
+  TemplateData/
 ```
 
-Spring Boot の `games` には以下のメタデータを持たせます。
+React は Unity WebGL ゲームを iframe で表示します。Unity 側はゲーム終了時に `window.parent.postMessage` で親の React ページへスコアを送ります。
 
-| field | example | description |
-| --- | --- | --- |
-| `code` / `slug` | `no-strike` | URL とスコア登録で使うゲーム識別子 |
-| `gameType` | `UNITY_WEBGL` | `PHASER` または `UNITY_WEBGL` |
-| `launchPath` | `/unity-games/no-strike/index.html` | iframe の表示先 |
+### Unity から送る message 形式
 
-React は `gameType` が `UNITY_WEBGL` のゲームを iframe で表示します。`launchPath` が未設定の Unity ゲームはゲーム選択リンクに出しません。
-
-### Unity から React へ送るスコア
-
-ゲーム終了時、Unity WebGL iframe から親 React ページへ `postMessage` で以下の JSON を送ります。
+No Strike:
 
 ```json
 {
@@ -174,20 +292,39 @@ React は `gameType` が `UNITY_WEBGL` のゲームを iframe で表示します
 }
 ```
 
-React 側は `type`、`gameSlug`、`score`、`playTimeSeconds` を検証します。ログイン済みなら JWT 付きで `/api/scores` に送信し、未ログインなら保存せずログイン案内を表示します。
+Shikoku Rush:
 
-No Strike ではゲームオーバー時に `score = 生存時間(秒) * 100`、`playTimeSeconds = 生存時間(秒の整数部分)` を送信します。
+```json
+{
+  "type": "UNITY_GAME_FINISHED",
+  "gameSlug": "shikoku-rush",
+  "score": 2500,
+  "playTimeSeconds": 64
+}
+```
 
-### Unity WebGL 側の JavaScript サンプル
+React 側は次の条件を満たす message だけを処理します。
 
-Unity プロジェクトの `Assets/Plugins/WebGL/MiniGameHubBridge.jslib` に以下を追加します。
+- `origin` が Mini Game Hub と同じ
+- `type` が `UNITY_GAME_FINISHED`
+- `gameSlug` が表示中のゲームと一致する
+- `score` が 0 以上の数値
+- `playTimeSeconds` が 0 以上の数値
+
+未ログインの場合はスコア登録せず、ログイン案内を表示します。ログイン済みの場合は JWT 付きで `/api/scores` に送信します。
+
+### Unity 側 JavaScript
+
+Unity プロジェクトに `Assets/Plugins/WebGL/MiniGameHubBridge.jslib` を追加します。
+
+`gameSlug` はゲームごとに変更してください。
 
 ```js
 mergeInto(LibraryManager.library, {
   MiniGameHubSubmitScore: function(score, playTimeSeconds) {
     window.parent.postMessage({
       type: "UNITY_GAME_FINISHED",
-      gameSlug: "no-strike",
+      gameSlug: "shikoku-rush",
       score: Number(score),
       playTimeSeconds: Number(playTimeSeconds)
     }, window.location.origin);
@@ -195,9 +332,9 @@ mergeInto(LibraryManager.library, {
 });
 ```
 
-### Unity C# から呼ぶ例
+### Unity 側 C#
 
-Unity プロジェクトの `Assets/Scripts/MiniGameHubBridge.cs` に以下を追加し、ゲーム終了処理から `MiniGameHubBridge.SubmitScore(score, playTimeSeconds)` を呼びます。
+Unity プロジェクトに `Assets/Scripts/MiniGameHubBridge.cs` を追加します。
 
 ```csharp
 using System.Runtime.InteropServices;
@@ -215,89 +352,237 @@ public static class MiniGameHubBridge
 #if UNITY_WEBGL && !UNITY_EDITOR
         MiniGameHubSubmitScore(score, playTimeSeconds);
 #else
-        Debug.Log($"MiniGameHub score: {score}, time: {playTimeSeconds}");
+        Debug.Log($"MiniGameHub score submit skipped outside WebGL build. score={score}, playTimeSeconds={playTimeSeconds}");
 #endif
     }
 }
 ```
 
-WebGL ビルド時だけ `DllImport("__Internal")` が有効になるよう、必ず `UNITY_WEBGL && !UNITY_EDITOR` で囲んでください。
+ゲーム終了処理またはリザルト画面の表示時に呼びます。
 
-No Strike の Unity プロジェクトでは `GameManager.GameOver()` からこのブリッジを呼び出します。
-
-## Unity WebGL ゲーム追加手順
-
-1. Unity の WebGL ビルドを `frontend/public/unity-games/{gameSlug}/` に置きます。
-2. `{gameSlug}/index.html` から `Build/` と `TemplateData/` が正しく参照できることを確認します。
-3. Unity 側のゲーム終了処理から `UNITY_GAME_FINISHED` message を送ります。
-4. `DataInitializer` または管理画面相当の登録処理で、`code/slug`, `name`, `description`, `gameType=UNITY_WEBGL`, `launchPath=/unity-games/{gameSlug}/index.html` を設定します。
-5. React のゲーム一覧に表示されること、`/game?game={gameSlug}` で起動できること、`/ranking?game={gameSlug}` でランキングが見られることを確認します。
-
-将来的な slug 例:
-
-- `glico-fighter`
-- `shikoku-rush`
-- `doodle-jump`
-
-ただし実ファイルが存在しないゲームは `launchPath` を設定せず、画面にリンクを出さない運用にしてください。
-
-## ゲーム別ランキング API
-
-```http
-GET /api/games/no-strike/ranking
+```csharp
+MiniGameHubBridge.SubmitScore(score, playTimeSeconds);
 ```
 
-レスポンス例:
+WebGL ビルド時だけ JavaScript 連携が有効になるよう、`UNITY_WEBGL && !UNITY_EDITOR` の条件を外さないでください。
 
-```json
-[
-  {
-    "rank": 1,
-    "username": "player",
-    "score": 1800,
-    "playTimeSeconds": 60,
-    "createdAt": "2026-06-14T12:00:00Z",
-    "gameName": "No Strike",
-    "gameSlug": "no-strike"
-  }
-]
+## Unity WebGL ゲームを追加する手順
+
+例として `glico-fighter` を追加する場合:
+
+1. Unity 側で WebGL ビルドを作成します。
+2. ビルド結果を `frontend/public/unity-games/glico-fighter/` に置きます。
+3. `frontend/public/unity-games/glico-fighter/index.html` が存在することを確認します。
+4. Unity 側に `MiniGameHubBridge.jslib` と `MiniGameHubBridge.cs` を追加します。
+5. `.jslib` の `gameSlug` を `glico-fighter` にします。
+6. ゲーム終了処理から `MiniGameHubBridge.SubmitScore(score, playTimeSeconds)` を呼びます。
+7. Spring Boot の初期データ、または管理画面相当の登録処理でゲームを追加します。
+
+登録するゲーム情報の例:
+
+| field | value |
+| --- | --- |
+| `code` / `slug` | `glico-fighter` |
+| `name` | `Glico Fighter` |
+| `description` | ゲーム説明 |
+| `gameType` | `UNITY_WEBGL` |
+| `launchPath` | `/unity-games/glico-fighter/index.html` |
+| `active` | `true` |
+
+追加後に確認する URL:
+
+```text
+http://localhost:5173/game?game=glico-fighter
+http://localhost:5173/ranking?game=glico-fighter
 ```
 
-ランキングはスコア降順、同点の場合は作成日時昇順で上位 10 件です。既存互換のため `/api/games/{gameId}/ranking` も利用できます。
+実ファイルがまだ存在しないゲームは、画面にリンクを出さないようにしてください。将来的な slug の候補としては `glico-fighter`、`doodle-jump` などを想定できます。
 
-## ゲーム別実績
+## 実績
 
-`achievements.game_id` が `null` の実績は全ゲーム共通です。`game_id` が設定されている実績は、そのゲームのスコア登録時だけ判定されます。
+`achievements.game_id` が `null` の実績は全ゲーム共通です。
 
-No Strike には以下の実績を初期投入します。
+`achievements.game_id` が設定されている実績は、そのゲームのスコア登録時だけ判定されます。
 
-- `NO_STRIKE_FIRST_PLAY`: No Strike 初プレイ
-- `NO_STRIKE_SCORE_1000`: No Strike でスコア 1000 点突破
-- `NO_STRIKE_SCORE_3000`: No Strike でスコア 3000 点突破
-- `NO_STRIKE_SURVIVE_60`: No Strike で 60 秒以上生存
+### 全ゲーム共通
 
-## Unity 連携の動作確認
+| code | 条件 |
+| --- | --- |
+| `FIRST_PLAY` | 初めてスコアを登録 |
+| `PLAY_10` | スコアを 10 回登録 |
+| `SCORE_1000` | スコア 1000 点以上 |
+| `SCORE_5000` | スコア 5000 点以上 |
+| `RANKING_FIRST` | ゲーム別ランキング 1 位 |
+
+### No Strike
+
+| code | 条件 |
+| --- | --- |
+| `NO_STRIKE_FIRST_PLAY` | No Strike 初プレイ |
+| `NO_STRIKE_SCORE_1000` | No Strike でスコア 1000 点以上 |
+| `NO_STRIKE_SCORE_3000` | No Strike でスコア 3000 点以上 |
+| `NO_STRIKE_SURVIVE_60` | No Strike で 60 秒以上生存 |
+
+### Shikoku Rush
+
+| code | 条件 |
+| --- | --- |
+| `SHIKOKU_RUSH_FIRST_PLAY` | Shikoku Rush 初プレイ |
+| `SHIKOKU_RUSH_SCORE_1000` | Shikoku Rush でスコア 1000 点以上 |
+| `SHIKOKU_RUSH_SCORE_3000` | Shikoku Rush でスコア 3000 点以上 |
+| `SHIKOKU_RUSH_SCORE_5000` | Shikoku Rush でスコア 5000 点以上 |
+| `SHIKOKU_RUSH_SURVIVE_60` | Shikoku Rush で 60 秒以上プレイ |
+
+獲得済み実績は `user_achievements` に保存されます。同じユーザーが同じ実績を重複獲得しないよう、`user_id` と `achievement_id` の組み合わせを一意にしています。
+
+## 動作確認手順
+
+### 基本確認
 
 1. PostgreSQL、Spring Boot、React を起動します。
-2. `user@example.com` / `password` でログインします。
-3. `/game?game=no-strike` を開き、No Strike が iframe 内で表示されることを確認します。
-4. No Strike でゲームオーバーになると、Unity 側から `UNITY_GAME_FINISHED` が送られ、ログイン済みユーザーのスコアが自動登録されます。
+2. `http://localhost:5173` を開きます。
+3. `user@example.com` / `password` でログインします。
+4. `/game?game=dodge-runner` を開き、スタート画面からゲームを開始できることを確認します。
+5. ゲーム終了後、リザルト画面からスコア登録できることを確認します。
+6. `/ranking?game=dodge-runner` にスコアが表示されることを確認します。
+7. `/mypage` にプレイ履歴と実績が表示されることを確認します。
+
+### No Strike
+
+1. `/game?game=no-strike` を開きます。
+2. No Strike が画面内の iframe で表示されることを確認します。
+3. ゲームオーバーまでプレイします。
+4. 画面に `スコアを登録しました` と表示されることを確認します。
 5. `/ranking?game=no-strike` にスコアが表示されることを確認します。
-6. `/mypage` の Play History に No Strike が表示され、条件を満たした No Strike 実績が表示されることを確認します。
+6. `/mypage` のプレイ履歴と実績に No Strike の結果が表示されることを確認します。
+
+### Shikoku Rush
+
+1. `/game?game=shikoku-rush` を開きます。
+2. Shikoku Rush が画面内の iframe で表示されることを確認します。
+3. ゲームを終了またはクリアします。
+4. 画面に `スコアを登録しました` と表示されることを確認します。
+5. `/ranking?game=shikoku-rush` にスコアが表示されることを確認します。
+6. `/mypage` のプレイ履歴と実績に Shikoku Rush の結果が表示されることを確認します。
+
+### 管理画面
+
+1. `admin@example.com` / `password` でログインします。
+2. `/admin` を開きます。
+3. ゲーム一覧に `ドッジランナー`、`No Strike`、`Shikoku Rush` が表示されることを確認します。
+4. 各ゲームの `slug`、`gameType`、`launchPath`、ランキングリンクを確認します。
+5. 実績一覧で、全ゲーム共通実績とゲーム別実績が表示されることを確認します。
+
+## 開発用の確認
+
+開発モードでは、Unity ゲーム画面に `テスト用スコア送信` ボタンが表示されます。
+
+これは Unity 側のゲーム終了処理を待たずに、React からスコア登録 API までの流れを確認するためのものです。本番 UI として使うためのボタンではありません。
+
+目安のテストスコア:
+
+| gameSlug | score | playTimeSeconds |
+| --- | --- | --- |
+| `no-strike` | `1200` | `45` |
+| `shikoku-rush` | `2500` | `64` |
+
+## Unity WebGL ビルドの確認方法
+
+Unity WebGL の `Build` 配下には `.gz` や `.br` で圧縮されたファイルが入ることがあります。
+
+そのため、普通の `grep -R "UNITY_GAME_FINISHED" frontend/public/unity-games/shikoku-rush` では何も出ない場合があります。
+
+`.gz` の中身を確認する場合:
+
+```bash
+gzip -cd /Users/sanoshuto/mini-game-hub/frontend/public/unity-games/shikoku-rush/Build/shikoku-rush.framework.js.gz | grep -a "UNITY_GAME_FINISHED"
+```
+
+`UNITY_GAME_FINISHED` や `MiniGameHubSubmitScore` が見つかれば、Unity WebGL ビルド内に Mini Game Hub へのスコア送信コードが含まれています。
+
+ブラウザで古い Unity ビルドが残っている場合は、強制更新してください。
+
+- macOS Chrome / Safari: `Cmd + Shift + R`
+
+## テストとビルド
+
+バックエンドのテスト:
+
+```bash
+cd /Users/sanoshuto/mini-game-hub/backend
+mvn test
+```
+
+フロントエンドのビルド:
+
+```bash
+cd /Users/sanoshuto/mini-game-hub/frontend
+npm run build
+```
+
+## よくあるトラブル
+
+### React 画面が API に接続できない
+
+Spring Boot が `http://localhost:8080` で起動しているか確認してください。
+
+また、`backend/src/main/resources/application.yml` の CORS 設定は標準で `http://localhost:5173` を許可しています。Vite のポートを変えた場合は、`CORS_ALLOWED_ORIGIN` も合わせて変更してください。
+
+### Unity ゲームを直接開くとスコア登録されない
+
+Unity の `index.html` を直接開いた場合、親の React ページが存在しないため、Mini Game Hub が `postMessage` を受け取れません。
+
+必ず Mini Game Hub の画面から開いてください。
+
+```text
+http://localhost:5173/game?game=no-strike
+http://localhost:5173/game?game=shikoku-rush
+```
+
+### Unity 側でビルドしたのにスコアが送られない
+
+次を確認してください。
+
+- Unity プロジェクトに `Assets/Plugins/WebGL/MiniGameHubBridge.jslib` がある
+- Unity プロジェクトに `Assets/Scripts/MiniGameHubBridge.cs` がある
+- ゲーム終了処理で `MiniGameHubBridge.SubmitScore(score, playTimeSeconds)` を呼んでいる
+- `.jslib` の `gameSlug` が Mini Game Hub 側の slug と一致している
+- WebGL ビルドを `frontend/public/unity-games/{gameSlug}/` に置き直している
+- ブラウザを強制更新している
+
+### Unity のビルドログに `raw string literals` のエラーが出る
+
+Unity の C# 設定によっては raw string literal が使えません。
+
+`""" ... """` のような C# 11 の raw string literal を避け、通常の文字列または `File.WriteAllLines(...)` を使ってください。
+
+### DB を初期化して最初から確認したい
+
+保存済みデータを消して初期状態に戻す場合:
+
+```bash
+cd /Users/sanoshuto/mini-game-hub
+docker compose down -v
+docker compose up -d
+```
+
+その後、Spring Boot を起動し直すと初期データが再投入されます。
+
+## ポートフォリオで説明するポイント
+
+- ミニゲーム単体ではなく、スコア、ランキング、実績、イベント、管理画面を持つゲームプラットフォームとして設計している
+- React / Phaser / Unity WebGL を同じゲーム一覧から扱えるようにしている
+- Unity WebGL とは iframe と `postMessage` で疎結合に連携している
+- Spring Boot 側では `Controller -> Service -> Repository -> Entity` の責務を分けている
+- JWT と Role により USER / ADMIN の権限を分離している
+- スコア登録時にイベント倍率と実績判定をサービス層で処理している
+- ゲーム別ランキングとゲーム別実績に対応している
 
 ## 今後追加できる機能
 
-- 複数ゲームの追加とゲーム別ランキング期間
 - イベント別ランキング
 - 実績条件の管理画面化
 - スコア不正対策の強化
-- リプレイ ID やゲームセッション ID の導入
+- ゲームセッション ID やリプレイ ID の導入
 - 管理画面の検索、ページング、監査ログ
-
-## ポートフォリオで説明する際のポイント
-
-- ミニゲーム単体ではなく、運営に必要な DB/API/管理画面を含むプラットフォームとして設計している
-- JWT、BCrypt、Role による USER/ADMIN 分離を実装している
-- スコア登録時にイベント倍率と実績判定をサービス層で処理している
-- ゲーム難易度を DB の `game_settings` から取得し、管理画面の変更がゲーム開始時に反映される
-- `Controller -> Service -> Repository -> Entity` の責務分離で、ビジネスロジックを Controller に寄せすぎない構成にしている
+- Unity WebGL ゲーム登録を管理画面から完結できる機能

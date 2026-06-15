@@ -22,6 +22,11 @@ export function GamePage() {
   const selectedGameSlug = searchParams.get("game");
   const playableGames = games.filter((game) => game.gameType !== "UNITY_WEBGL" || Boolean(game.launchPath));
   const isUnityGame = selectedGame?.gameType === "UNITY_WEBGL";
+  const descriptionLines = selectedGame?.description
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean) ?? [];
+  const showUnityTestSubmit = import.meta.env.DEV;
 
   useEffect(() => {
     apiFetch<Game[]>("/games")
@@ -91,6 +96,13 @@ export function GamePage() {
     void submitScore(gameResult, true);
   }, [isAuthenticated, submitScore]);
 
+  const sendUnityTestScore = useCallback(() => {
+    const testResult = selectedGame?.slug === "shikoku-rush"
+      ? { score: 2500, playTimeSeconds: 64, dodged: 0 }
+      : { score: 1200, playTimeSeconds: 45, dodged: 0 };
+    handleUnityGameFinished(testResult);
+  }, [handleUnityGameFinished, selectedGame?.slug]);
+
   function restart() {
     setResult(null);
     setSubmitResult(null);
@@ -149,25 +161,38 @@ export function GamePage() {
             )}
           </div>
           <aside className="panel">
-            <h2>ゲーム設定</h2>
-            <dl className="metric-list">
-              <div>
-                <dt>敵の速度</dt>
-                <dd>{setting.enemySpeed}</dd>
-              </div>
-              <div>
-                <dt>出現間隔</dt>
-                <dd>{setting.spawnRate} ms</dd>
-              </div>
-              <div>
-                <dt>制限時間</dt>
-                <dd>{setting.timeLimitSeconds}s</dd>
-              </div>
-              <div>
-                <dt>基本スコア</dt>
-                <dd>{setting.baseScorePerSecond}/s</dd>
-              </div>
-            </dl>
+            <div className="game-guide">
+              <h2>ゲーム説明</h2>
+              {descriptionLines.length > 0 ? (
+                descriptionLines.map((line, index) => <p key={`${selectedGame.slug}-description-${index}`}>{line}</p>)
+              ) : (
+                <p className="muted">ゲーム説明はまだ登録されていません。</p>
+              )}
+            </div>
+
+            {!isUnityGame && (
+              <>
+                <h2>ゲーム設定</h2>
+                <dl className="metric-list">
+                  <div>
+                    <dt>敵の速度</dt>
+                    <dd>{setting.enemySpeed}</dd>
+                  </div>
+                  <div>
+                    <dt>出現間隔</dt>
+                    <dd>{setting.spawnRate} ms</dd>
+                  </div>
+                  <div>
+                    <dt>制限時間</dt>
+                    <dd>{setting.timeLimitSeconds}s</dd>
+                  </div>
+                  <div>
+                    <dt>基本スコア</dt>
+                    <dd>{setting.baseScorePerSecond}/s</dd>
+                  </div>
+                </dl>
+              </>
+            )}
 
             {isUnityGame && (
               <div className="unity-score-status">
@@ -175,6 +200,11 @@ export function GamePage() {
                 <p className="muted">
                   ゲーム終了時に Unity から結果が自動で送信されます。
                 </p>
+                {showUnityTestSubmit && (
+                  <button className="button compact" type="button" onClick={sendUnityTestScore} disabled={submitting}>
+                    テスト用スコア送信
+                  </button>
+                )}
               </div>
             )}
 

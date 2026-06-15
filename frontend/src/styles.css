@@ -42,7 +42,8 @@ td {
   border-bottom: 1px solid #e2e8f0;
   text-align: left;
   vertical-align: top;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 th {
@@ -50,6 +51,7 @@ th {
   font-size: 0.82rem;
   font-weight: 700;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .app-shell {
@@ -145,7 +147,7 @@ th {
 }
 
 .game-layout {
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
   align-items: start;
 }
 
@@ -241,7 +243,9 @@ th {
   border-radius: 8px;
   cursor: pointer;
   font-weight: 800;
+  line-height: 1.25;
   text-decoration: none;
+  text-align: center;
   transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
 }
 
@@ -467,6 +471,7 @@ textarea {
 
 .game-stage {
   min-width: 0;
+  width: 100%;
   overflow: hidden;
   border: 1px solid #dbe3ee;
   border-radius: 8px;
@@ -487,9 +492,22 @@ textarea {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 10;
-  min-height: 360px;
+  min-height: clamp(320px, 52vw, 600px);
+  max-height: min(70vh, 640px);
   border: 0;
   background: #111827;
+}
+
+.game-guide {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.game-guide p {
+  margin: 0;
+  color: #334155;
+  line-height: 1.7;
 }
 
 .unity-score-status {
@@ -543,6 +561,10 @@ textarea {
 .table-wrap {
   width: 100%;
   overflow-x: auto;
+}
+
+.table-wrap table {
+  min-width: 680px;
 }
 
 .settings-grid {
@@ -638,6 +660,7 @@ textarea {
   }
 
   .unity-frame {
-    min-height: 300px;
+    min-height: 280px;
+    max-height: none;
   }
 }

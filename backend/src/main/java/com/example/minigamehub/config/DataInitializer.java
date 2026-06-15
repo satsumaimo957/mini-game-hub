@@ -81,7 +81,17 @@ public class DataInitializer {
                     gameRepository,
                     noStrike,
                     "No Strike",
-                    "障害物を避けながら生存時間を伸ばす3Dアクションゲーム",
+                    """
+                    最後の1ピンになってボールを避け続けろ！
+
+                    左右移動だけのシンプル操作で、迫り来るボールを回避するアクションゲーム。
+                    時間経過でボールは速くなり、カーブし、数も増加します。
+
+                    どこまで耐えられるか挑戦しよう！
+
+                    ← → キー：ピンを左右に移動
+                    マウスクリック：ボタンを押す
+                    """,
                     GameType.UNITY_WEBGL,
                     "/unity-games/no-strike/index.html"
             );
@@ -89,6 +99,44 @@ public class DataInitializer {
             gameSettingRepository.findByGame_Id(noStrike.getId()).orElseGet(() -> {
                 GameSetting setting = new GameSetting();
                 setting.setGame(noStrike);
+                setting.setEnemySpeed(0);
+                setting.setSpawnRate(0);
+                setting.setTimeLimitSeconds(60);
+                setting.setBaseScorePerSecond(0);
+                return gameSettingRepository.save(setting);
+            });
+
+            Game shikokuRush = gameRepository.findByCode("shikoku-rush")
+                    .orElseGet(() -> {
+                        Game created = new Game();
+                        created.setCode("shikoku-rush");
+                        created.setName("Shikoku Rush");
+                        created.setDescription("四国を舞台にした2Dマップ移動型ミニゲーム");
+                        created.setActive(true);
+                        return gameRepository.save(created);
+                    });
+            configureGame(
+                    gameRepository,
+                    shikokuRush,
+                    "Shikoku Rush",
+                    """
+                    四国がオーストラリアになりすまそうとしている…？
+
+                    『Shikoku Rush』は、表示される図形の中から四国を見つけ出し、選び続けるカジュアルゲームです。
+                    制限時間内にどれだけ正解できるかに挑戦します。
+
+                    似た形や回転した図形に惑わされず、正しく見極められるかがカギ。
+                    あなたの観察力が試されます！
+
+                    マウスクリック：四国だと思う図形を選択
+                    """,
+                    GameType.UNITY_WEBGL,
+                    "/unity-games/shikoku-rush/index.html"
+            );
+
+            gameSettingRepository.findByGame_Id(shikokuRush.getId()).orElseGet(() -> {
+                GameSetting setting = new GameSetting();
+                setting.setGame(shikokuRush);
                 setting.setEnemySpeed(0);
                 setting.setSpawnRate(0);
                 setting.setTimeLimitSeconds(60);
@@ -174,6 +222,51 @@ public class DataInitializer {
                     "No Strike 60秒生存",
                     "No Strike で60秒以上生存する。",
                     noStrike,
+                    AchievementConditionType.SURVIVE_SECONDS_AT_LEAST,
+                    60
+            );
+            achievementIfMissing(
+                    achievementRepository,
+                    "SHIKOKU_RUSH_FIRST_PLAY",
+                    "Shikoku Rush 初プレイ",
+                    "Shikoku Rush のスコアを初めて登録する。",
+                    shikokuRush,
+                    AchievementConditionType.FIRST_PLAY,
+                    1
+            );
+            achievementIfMissing(
+                    achievementRepository,
+                    "SHIKOKU_RUSH_SCORE_1000",
+                    "Shikoku Rush スコア1000突破",
+                    "Shikoku Rush でスコア1000点以上を達成する。",
+                    shikokuRush,
+                    AchievementConditionType.SCORE_AT_LEAST,
+                    1000
+            );
+            achievementIfMissing(
+                    achievementRepository,
+                    "SHIKOKU_RUSH_SCORE_3000",
+                    "Shikoku Rush スコア3000突破",
+                    "Shikoku Rush でスコア3000点以上を達成する。",
+                    shikokuRush,
+                    AchievementConditionType.SCORE_AT_LEAST,
+                    3000
+            );
+            achievementIfMissing(
+                    achievementRepository,
+                    "SHIKOKU_RUSH_SCORE_5000",
+                    "Shikoku Rush スコア5000突破",
+                    "Shikoku Rush でスコア5000点以上を達成する。",
+                    shikokuRush,
+                    AchievementConditionType.SCORE_AT_LEAST,
+                    5000
+            );
+            achievementIfMissing(
+                    achievementRepository,
+                    "SHIKOKU_RUSH_SURVIVE_60",
+                    "Shikoku Rush 60秒プレイ",
+                    "Shikoku Rush で60秒以上プレイする。",
+                    shikokuRush,
                     AchievementConditionType.SURVIVE_SECONDS_AT_LEAST,
                     60
             );
